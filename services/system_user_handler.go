@@ -100,9 +100,11 @@ type SystemUserRuleHandlerCheckAlterAuthorization struct {
 
 func (h *SystemUserRuleHandlerCheckAlterAuthorization) Handle(model *datamodels.SystemUser, c *models.Context) *lgo.OperationResult {
 	var actionKey string
-
 	if model.Id == uuid.Nil {
-		actionKey = datamodels.SYSTEM_USERS_ADD
+		if h.next != nil {
+			return h.next.Handle(model, c)
+		}
+		return lgo.NewSuccess(nil)
 	} else {
 		actionKey = datamodels.SYSTEM_SETTINGS_UPDATE
 	}

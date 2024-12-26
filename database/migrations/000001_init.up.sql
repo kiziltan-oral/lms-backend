@@ -74,7 +74,7 @@ CREATE TABLE "Timings" (
     "Description" text,
     "StartDateTime" timestamptz NOT NULL,
     "EndDateTime" timestamptz NOT NULL,
-    "Status" varchar(50) NOT NULL,
+    "Status" integer NOT NULL,
     CONSTRAINT fk_timings_clientprojectid FOREIGN KEY ("ClientProjectId") REFERENCES "ClientProjects" ("Id") ON DELETE CASCADE,
     CONSTRAINT fk_timings_systemuserid FOREIGN KEY ("SystemUserId") REFERENCES "SystemUsers" ("Id") ON DELETE CASCADE
 );

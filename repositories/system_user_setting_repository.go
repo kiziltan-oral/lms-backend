@@ -49,7 +49,7 @@ func (r *systemUserSettingRepository) GetById(id int) *lgo.OperationResult {
 		}
 		return lgo.NewLogicError(result.Error.Error(), nil)
 	}
-	return lgo.NewSuccess(setting)
+	return lgo.NewSuccess(&setting)
 }
 
 // #endregion GetById
@@ -97,15 +97,15 @@ func (r *systemUserSettingRepository) Delete(id int) *lgo.OperationResult {
 
 // #region GetValue
 func (r *systemUserSettingRepository) GetValue(c *models.Context, systemUserId uuid.UUID, key string) *lgo.OperationResult {
-	var setting datamodels.SystemUserSetting
-	result := r.db.Where("\"SystemUserId\" = ? AND \"Key\" = ?", systemUserId, key).First(&setting)
+	var systemUserSetting datamodels.SystemUserSetting
+	result := r.db.Where("\"SystemUserId\" = ? AND \"Key\" = ?", systemUserId, key).First(&systemUserSetting)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return lgo.NewSuccess(nil)
 		}
 		return lgo.NewFailureWithError(result.Error)
 	}
-	return lgo.NewSuccess(setting)
+	return lgo.NewSuccess(&systemUserSetting)
 }
 
 // #endregion GetValue

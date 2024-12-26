@@ -151,9 +151,9 @@ func (r *cacheRepository) DeleteSystemUserCredentialById(id uuid.UUID) *lgo.Oper
 // #endregion Delete System User Credential By Id
 
 // #region Get System User Setting
-func (r *cacheRepository) GetSystemUserSetting(c *models.Context, setting string) *lgo.OperationResult {
+func (cr *cacheRepository) GetSystemUserSetting(c *models.Context, setting string) *lgo.OperationResult {
 	// #region Get SystemUserCredential
-	systemUserCredentialResult := r.GetSystemUserCredential(c.Token)
+	systemUserCredentialResult := cr.GetSystemUserCredential(c.Token)
 	if !systemUserCredentialResult.IsSuccess() {
 		return systemUserCredentialResult
 	}
@@ -166,8 +166,7 @@ func (r *cacheRepository) GetSystemUserSetting(c *models.Context, setting string
 
 	// #region Try Get From Cache
 	settingValueExists := true
-	redisKey := "sus:" + systemUserCredential.Id                            // Redis Hash anahtarı
-	settingValue, err := datasources.Cache.HGet(redisKey, setting).Result() // HGet ile Hash alt anahtarı okuyoruz
+	settingValue, err := datasources.Cache.Get("sus:" + systemUserCredential.Id + ":" + setting).Result()
 	if err == redis.Nil {
 		settingValueExists = false
 	} else if err != nil {
@@ -178,39 +177,51 @@ func (r *cacheRepository) GetSystemUserSetting(c *models.Context, setting string
 	// #region Lock and Try Cache Again
 	if !settingValueExists {
 		getSystemUserSettingMutex.Lock()
-		defer getSystemUserSettingMutex.Unlock()
 
-		// Tekrar Cache'ten Deniyoruz
-		settingValue, err = datasources.Cache.HGet(redisKey, setting).Result()
+		// region Try Getting From Cache Again
+		settingValueExists = true
+		settingValue, err = datasources.Cache.Get("sus:" + systemUserCredential.Id + ":" + setting).Result()
 		if err == redis.Nil {
 			settingValueExists = false
 		} else if err != nil {
+			getSystemUserSettingMutex.Unlock()
 			return lgo.NewFailureWithError(err)
 		}
+		// endregion Try Getting From Cache Again
 
 		if !settingValueExists {
 			// #region Get From SystemUserSetting Repository
-			var systemUserSettingRepository = NewSystemUserSettingRepository(datasources.Database)
-			systemUserSettingResult := systemUserSettingRepository.GetValue(c, systemUserIdParsed, setting)
+			var systemUserSettingRepo = NewSystemUserSettingRepository(datasources.Database)
+			systemUserSettingResult := systemUserSettingRepo.GetValue(c, systemUserIdParsed, setting)
 			if !systemUserSettingResult.IsSuccess() {
+				getSystemUserSettingMutex.Unlock()
 				return systemUserSettingResult
 			}
-
-			// Veritabanından Gelen Değeri İşliyoruz
-			settingValue, ok := systemUserSettingResult.ReturnObject.(string)
-			if !ok {
-				return lgo.NewLogicError("Hatalı veri türü", nil)
+			if systemUserSettingResult.ReturnObject == nil {
+				return lgo.NewLogicError("Gerekli yetki bulunamadı.", nil)
 			}
+
+			// Burada doğru türü alın ve Value alanını kullanın
+			systemUserSetting, ok := systemUserSettingResult.ReturnObject.(*datamodels.SystemUserSetting)
+			if !ok {
+				log.Printf("Hatalı veri türü: %T\n", systemUserSettingResult.ReturnObject)
+				return lgo.NewLogicError("Hatalı veri türü.", nil)
+			}
+			settingValue = systemUserSetting.Value
+
 			// #endregion Get From SystemUserSetting Repository
 
 			// #region Populate Cache
-			err = datasources.Cache.HSet(redisKey, setting, settingValue).Err()
+			err = datasources.Cache.Set("sus:"+systemUserCredential.Id+":"+setting, settingValue, 0).Err()
 			if err != nil {
-				log.Println("Redis Cache Güncellenemedi:", err)
+				log.Println("Cache güncellenemedi!")
 			}
 			// #endregion Populate Cache
 		}
+
+		getSystemUserSettingMutex.Unlock()
 	}
+
 	// #endregion Lock and Try Cache Again
 
 	return lgo.NewSuccess(settingValue)

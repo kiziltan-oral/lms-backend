@@ -1,6 +1,7 @@
 package services
 
 import (
+	"lms-web-services-main/database/datasources"
 	"lms-web-services-main/models"
 	datamodels "lms-web-services-main/models/data"
 	mvc "lms-web-services-main/models/mvc"
@@ -44,7 +45,7 @@ func NewSystemUserService(repo repositories.SystemUserRepository) SystemUserServ
 		})
 
 	service.deleteRules = (&SystemUserRuleHandlerCheckDeleteAuthorization{}).
-		SetNext(&SystemUserRuleHandlerCheckForeignReferences{})
+		SetNext(&SystemUserRuleHandlerCheckForeignReferences{SystemUserService: service})
 	service.updateRules = (&SystemUserRuleHandlerValidation{}).
 		SetNext(&SystemUserRuleHandlerCheckAlterAuthorization{}).
 		SetNext(&SystemUserRuleHandlerDataIntegrity{
@@ -65,17 +66,71 @@ func (s *systemUserService) Create(systemUser *datamodels.SystemUser, c *models.
 		return lgo.NewLogicError("E-posta adresi zorunludur.", nil)
 	}
 
+	// Şifre tuzu oluştur ve şifreyi hash'le
 	salt := utils.GenerateRandomNumeric(15)
 	systemUser.PasswordSalt = salt
-
 	hashedPassword := utils.ComputeSHA256(systemUser.Password, salt)
 	systemUser.Password = hashedPassword
 
+	// Kuralları çalıştır
 	if result := s.saveRules.Handle(systemUser, c); !result.IsSuccess() {
 		return result
 	}
 
-	return s.repo.Create(systemUser)
+	// Kullanıcıyı veritabanına ekle
+	createResult := s.repo.Create(systemUser)
+	if !createResult.IsSuccess() {
+		return createResult
+	}
+
+	// Varsayılan izinleri ata
+	permissionResult := s.assignDefaultPermissions(systemUser.Id, c)
+	if !permissionResult.IsSuccess() {
+		return permissionResult
+	}
+
+	return createResult
+}
+
+func (s *systemUserService) assignDefaultPermissions(systemUserId uuid.UUID, c *models.Context) *lgo.OperationResult {
+	// Varsayılan izinler
+	defaultPermissions := []datamodels.SystemUserSetting{
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_USERS_VIEW, Value: "1", Description: "Sistem kullanıcılarını görüntüleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_USERS_ADD, Value: "1", Description: "Sistem kullanıcılarını ekleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_USERS_UPDATE, Value: "1", Description: "Sistem kullanıcılarını güncelleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_USERS_DELETE, Value: "1", Description: "Sistem kullanıcılarını silme yetkisi"},
+
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_SETTINGS_VIEW, Value: "1", Description: "Sistem ayarlarını görüntüleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_SETTINGS_ADD, Value: "1", Description: "Sistem ayarlarını ekleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_SETTINGS_UPDATE, Value: "1", Description: "Sistem ayarlarını güncelleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.SYSTEM_SETTINGS_DELETE, Value: "1", Description: "Sistem ayarlarını silme yetkisi"},
+
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTS_VIEW, Value: "1", Description: "Müşterileri görüntüleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTS_ADD, Value: "1", Description: "Müşterileri ekleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTS_UPDATE, Value: "1", Description: "Müşterileri güncelleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTS_DELETE, Value: "1", Description: "Müşterileri silme yetkisi"},
+
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTPROJECTS_VIEW, Value: "1", Description: "Müşteri projelerini görüntüleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTPROJECTS_ADD, Value: "1", Description: "Müşteri projelerini ekleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTPROJECTS_UPDATE, Value: "1", Description: "Müşteri projelerini güncelleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.CLIENTPROJECTS_DELETE, Value: "1", Description: "Müşteri projelerini silme yetkisi"},
+
+		{SystemUserId: systemUserId, Key: datamodels.TIMINGS_VIEW, Value: "1", Description: "Zamanlamaları görüntüleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.TIMINGS_ADD, Value: "1", Description: "Zamanlamaları ekleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.TIMINGS_UPDATE, Value: "1", Description: "Zamanlamaları güncelleme yetkisi"},
+		{SystemUserId: systemUserId, Key: datamodels.TIMINGS_DELETE, Value: "1", Description: "Zamanlamaları silme yetkisi"},
+	}
+
+	// Her bir izin için `Set` metodunu çağır
+	for _, permission := range defaultPermissions {
+		var systemUserSettingService = NewSystemUserSettingService(repositories.NewSystemUserSettingRepository(datasources.Database))
+		result := systemUserSettingService.Set(&permission, c)
+		if !result.IsSuccess() {
+			return result // Hata varsa işlemi durdur
+		}
+	}
+
+	return lgo.NewSuccess(nil) // Tüm izinler başarıyla eklendi
 }
 
 //#endregion Create

@@ -113,7 +113,7 @@ func (r *clientProjectRepository) GetAll() *lgo.OperationResult {
 // #region Get ClientProjects By ClientId
 func (r *clientProjectRepository) GetByClientId(clientId int) *lgo.OperationResult {
 	var clientProjects []*datamodels.ClientProject
-	result := r.db.Where("client_id = ?", clientId).Find(&clientProjects)
+	result := r.db.Where("\"ClientId\" = ?", clientId).Find(&clientProjects)
 	if result.Error != nil {
 		return lgo.NewLogicError(result.Error.Error(), nil)
 	}

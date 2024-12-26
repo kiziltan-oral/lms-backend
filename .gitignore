@@ -1,0 +1,9 @@
+# Genel Ayarlar
+*.env
+*.log
+node_modules/
+.vscode/
+
+# Sistem Dosyaları
+.DS_Store
+Thumbs.db

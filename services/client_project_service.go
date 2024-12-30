@@ -3,6 +3,7 @@ package services
 import (
 	"lms-web-services-main/models"
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 	repositories "lms-web-services-main/repositories"
 
 	"github.com/LGYtech/lgo"
@@ -13,7 +14,7 @@ type ClientProjectService interface {
 	Update(clientProject *datamodels.ClientProject, c *models.Context) *lgo.OperationResult
 	Delete(id int, c *models.Context) *lgo.OperationResult
 	GetById(id int, c *models.Context) *lgo.OperationResult
-	GetAll(c *models.Context) *lgo.OperationResult
+	GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult
 	GetByClientId(clientId int, c *models.Context) *lgo.OperationResult
 }
 
@@ -88,12 +89,17 @@ func (s *clientProjectService) GetById(id int, c *models.Context) *lgo.Operation
 //#endregion Get ClientProject By Id
 
 // #region Get All ClientProjects
-func (s *clientProjectService) GetAll(c *models.Context) *lgo.OperationResult {
+func (s *clientProjectService) GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult {
 	clientProject := &datamodels.ClientProject{}
 	if result := s.readRules.Handle(clientProject, c); !result.IsSuccess() {
 		return result
 	}
-	return s.repo.GetAll()
+
+	if result := query.Validate(); !result.IsSuccess() {
+		return lgo.NewLogicError("Geçersiz sorgu parametreleri: "+result.ErrorMessage, nil)
+	}
+
+	return s.repo.GetAll(query)
 }
 
 //#endregion Get All ClientProjects

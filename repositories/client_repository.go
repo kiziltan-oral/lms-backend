@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 
 	"github.com/LGYtech/lgo"
 	"gorm.io/gorm"
@@ -14,7 +15,7 @@ type ClientRepository interface {
 	Update(client *datamodels.Client) *lgo.OperationResult
 	Delete(id int) *lgo.OperationResult
 	GetById(id int) *lgo.OperationResult
-	GetAll() *lgo.OperationResult
+	GetAll(query *mvc.QueryModel) *lgo.OperationResult
 }
 
 type clientRepository struct {
@@ -100,12 +101,30 @@ func (r *clientRepository) GetById(id int) *lgo.OperationResult {
 // #endregion Get Client By Id
 
 // #region Get All Clients
-func (r *clientRepository) GetAll() *lgo.OperationResult {
+func (r *clientRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
 	var clients []*datamodels.Client
-	result := r.db.Find(&clients)
-	if result.Error != nil {
-		return lgo.NewLogicError(result.Error.Error(), nil)
+
+	// Varsayılan sıralama
+	defaultSorting := &mvc.DataSortingOptionItem{
+		ColumnName: "Title",
+		Sorting:    0, // 0: ASC, 1: DESC
 	}
+
+	// Arama yapılacak sütunlar
+	searchableColumns := []string{"ShortTitle", "Title"}
+
+	// QueryModel'i uygula
+	db, result := ApplyQueryModel(r.db, query, searchableColumns, defaultSorting)
+	if !result.IsSuccess() {
+		return lgo.NewLogicError("Sorgu modeli uygulanırken bir hata oluştu.", nil)
+	}
+
+	// Veritabanı sorgusunu çalıştır
+	queryResult := db.Find(&clients)
+	if queryResult.Error != nil {
+		return lgo.NewLogicError(queryResult.Error.Error(), nil)
+	}
+
 	return lgo.NewSuccess(clients)
 }
 

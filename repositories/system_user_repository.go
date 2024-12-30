@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 
 	"github.com/LGYtech/lgo"
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ type SystemUserRepository interface {
 	Delete(id uuid.UUID) *lgo.OperationResult
 	GetById(id uuid.UUID) *lgo.OperationResult
 	GetByEmail(email string) *lgo.OperationResult
-	GetAll() *lgo.OperationResult
+	GetAll(query *mvc.QueryModel) *lgo.OperationResult
 	CheckForeignReferences(systemUser *datamodels.SystemUser) *lgo.OperationResult
 	CheckExistingSystemUser(systemUser *datamodels.SystemUser) *lgo.OperationResult
 }
@@ -117,11 +118,24 @@ func (r *systemUserRepository) GetByEmail(email string) *lgo.OperationResult {
 // #endregion GetByEmail
 
 // #region GetAll
-func (r *systemUserRepository) GetAll() *lgo.OperationResult {
+func (r *systemUserRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
 	var systemUsers []*datamodels.SystemUser
-	result := r.db.Select("\"Id\",\"Name\", \"Surname\",\"Email\"").Find(&systemUsers)
-	if result.Error != nil {
-		return lgo.NewLogicError(result.Error.Error(), nil)
+
+	defaultSorting := &mvc.DataSortingOptionItem{
+		ColumnName: "Name",
+		Sorting:    0,
+	}
+
+	searchableColums := []string{"Name", "Surname", "Email"}
+
+	db, result := ApplyQueryModel(r.db, query, searchableColums, defaultSorting)
+	if !result.IsSuccess() {
+		return lgo.NewLogicError("Sorgu modeli uygulanırken bir hata oluştur", nil)
+	}
+
+	queryResult := db.Select("Id, Name, Surname, Email, IsActive").Find(&systemUsers)
+	if queryResult.Error != nil {
+		return lgo.NewLogicError(queryResult.Error.Error(), nil)
 	}
 	return lgo.NewSuccess(systemUsers)
 }

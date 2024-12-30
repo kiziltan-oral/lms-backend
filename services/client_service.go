@@ -3,6 +3,7 @@ package services
 import (
 	"lms-web-services-main/models"
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 	repositories "lms-web-services-main/repositories"
 
 	"github.com/LGYtech/lgo"
@@ -14,7 +15,7 @@ type ClientService interface {
 	Update(client *datamodels.Client, c *models.Context) *lgo.OperationResult
 	Delete(id int, c *models.Context) *lgo.OperationResult
 	GetById(id int, c *models.Context) *lgo.OperationResult
-	GetAll(c *models.Context) *lgo.OperationResult
+	GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult
 }
 
 //#endregion Client Service Interface
@@ -95,13 +96,17 @@ func (s *clientService) GetById(id int, c *models.Context) *lgo.OperationResult 
 //#endregion Get Client By Id
 
 // #region Get All Clients
-func (s *clientService) GetAll(c *models.Context) *lgo.OperationResult {
+func (s *clientService) GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult {
 	client := &datamodels.Client{}
 	if result := s.readRules.Handle(client, c); !result.IsSuccess() {
 		return result
 	}
 
-	return s.repo.GetAll()
+	if result := query.Validate(); !result.IsSuccess() {
+		return lgo.NewLogicError("Geçersiz sorgu parametreleri: "+result.ErrorMessage, nil)
+	}
+
+	return s.repo.GetAll(query)
 }
 
 //#endregion Get All Clients

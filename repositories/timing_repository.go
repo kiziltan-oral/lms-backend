@@ -5,6 +5,7 @@ import (
 	"time"
 
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 
 	"github.com/LGYtech/lgo"
 	"gorm.io/gorm"
@@ -15,7 +16,7 @@ type TimingRepository interface {
 	Update(timing *datamodels.Timing) *lgo.OperationResult
 	Delete(id int) *lgo.OperationResult
 	GetById(id int) *lgo.OperationResult
-	GetAll() *lgo.OperationResult
+	GetAll(query *mvc.QueryModel) *lgo.OperationResult
 	GetByClientProjectId(clientProjectId int) *lgo.OperationResult
 	GetByDateRange(startDate time.Time, endDate time.Time) *lgo.OperationResult
 }
@@ -104,12 +105,40 @@ func (r *timingRepository) GetById(id int) *lgo.OperationResult {
 // #endregion Get Timing By Id
 
 // #region Get All Timings
-func (r *timingRepository) GetAll() *lgo.OperationResult {
-	var timings []*datamodels.Timing
-	result := r.db.Find(&timings)
-	if result.Error != nil {
-		return lgo.NewLogicError(result.Error.Error(), nil)
+func (r *timingRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
+	var timings []mvc.TimingViewModel
+
+	defaultSorting := &mvc.DataSortingOptionItem{
+		ColumnName: "Title",
+		Sorting:    0,
 	}
+
+	searchableColumns := []string{"Title", "Description"}
+
+	db, result := ApplyQueryModel(r.db, query, searchableColumns, defaultSorting)
+	if !result.IsSuccess() {
+		return lgo.NewLogicError(("Sorgu modeli uygulanırken hata oluştur: " + result.ErrorMessage), nil)
+	}
+
+	db = db.Table("Timings AS t").Select(`
+		t.Id,
+		t.Title,
+		t.Description,
+		t.StartDateTime,
+		t.EndDateTime,
+		t.Status,
+		c.Title AS Client
+		cp.Name AS ClientProject
+	`).
+		Joins("JOIN ClientProjects AS cp ON t.ClientProjectId = cp.Id").
+		Joins("JOIN Clients AS c ON cp.ClientId = c.Id")
+
+	// Veriyi ViewModel'e dönüştür
+	queryResult := db.Scan(&timings)
+	if queryResult.Error != nil {
+		return lgo.NewLogicError("Veritabanı sorgusu başarızı: "+queryResult.Error.Error(), nil)
+	}
+
 	return lgo.NewSuccess(timings)
 }
 

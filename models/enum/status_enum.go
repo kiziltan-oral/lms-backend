@@ -1,6 +1,6 @@
 package enum
 
-import "fmt"
+import "errors"
 
 // StatusEnum, Timing için durumları temsil eder
 type StatusEnum int
@@ -36,7 +36,7 @@ func ParseStatus(value string) (StatusEnum, error) {
 			return StatusEnum(i), nil
 		}
 	}
-	return -1, fmt.Errorf("geçersiz durum: %s", value)
+	return -1, errors.New("geçersiz durum")
 }
 
 // IsValid, StatusEnum'un geçerli bir değer olup olmadığını kontrol eder

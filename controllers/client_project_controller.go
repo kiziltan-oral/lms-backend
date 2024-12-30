@@ -6,6 +6,7 @@ import (
 
 	"lms-web-services-main/models"
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 	"lms-web-services-main/services"
 
 	"github.com/LGYtech/lgo"
@@ -82,8 +83,14 @@ func (ctrl *ClientProjectController) GetById(c *gin.Context) {
 
 // #region Get All ClientProjects
 func (ctrl *ClientProjectController) GetAll(c *gin.Context) {
+	// İstekten QueryModel'i oluştur
+	var query mvc.QueryModel
+	if err := c.ShouldBindJSON(&query); err != nil {
+		c.JSON(http.StatusBadRequest, lgo.NewLogicError("Veri doğrulama hatası: "+err.Error(), nil))
+		return
+	}
 	context := models.NewContext(c)
-	result := ctrl.service.GetAll(context)
+	result := ctrl.service.GetAll(&query, context)
 	c.JSON(http.StatusOK, result)
 }
 

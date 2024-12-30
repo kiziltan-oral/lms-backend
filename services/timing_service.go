@@ -3,6 +3,7 @@ package services
 import (
 	"lms-web-services-main/models"
 	datamodels "lms-web-services-main/models/data"
+	"lms-web-services-main/models/mvc"
 	repositories "lms-web-services-main/repositories"
 
 	"time"
@@ -15,7 +16,7 @@ type TimingService interface {
 	Update(timing *datamodels.Timing, c *models.Context) *lgo.OperationResult
 	Delete(id int, c *models.Context) *lgo.OperationResult
 	GetById(id int, c *models.Context) *lgo.OperationResult
-	GetAll(c *models.Context) *lgo.OperationResult
+	GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult
 	GetByClientProjectId(clientProjectId int, c *models.Context) *lgo.OperationResult
 	GetByDateRange(startDate time.Time, endDate time.Time, c *models.Context) *lgo.OperationResult
 }
@@ -93,13 +94,17 @@ func (s *timingService) GetById(id int, c *models.Context) *lgo.OperationResult 
 //#endregion Get Timing By Id
 
 // #region Get All Timings
-func (s *timingService) GetAll(c *models.Context) *lgo.OperationResult {
+func (s *timingService) GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult {
 	timing := &datamodels.Timing{}
 	if result := s.readRules.Handle(timing, c); !result.IsSuccess() {
 		return result
 	}
 
-	return s.repo.GetAll()
+	if result := query.Validate(); !result.IsSuccess() {
+		return lgo.NewLogicError("Geçersiz sorgu parametreleri: "+result.ErrorMessage, nil)
+	}
+
+	return s.repo.GetAll(query)
 }
 
 //#endregion Get All Timings

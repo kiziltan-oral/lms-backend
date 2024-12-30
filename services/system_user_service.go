@@ -18,7 +18,7 @@ type SystemUserService interface {
 	Delete(id uuid.UUID, c *models.Context) *lgo.OperationResult
 	GetById(id uuid.UUID, c *models.Context) *lgo.OperationResult
 	GetByEmail(email string) *lgo.OperationResult
-	GetAll(c *models.Context) *lgo.OperationResult
+	GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult
 	CheckForeignReferences(systemUser *datamodels.SystemUser) *lgo.OperationResult
 	CheckExistingSystemUser(systemUser *datamodels.SystemUser) *lgo.OperationResult
 	Login(c *models.Context, request *mvc.SystemUserLoginRequest) *lgo.OperationResult
@@ -211,8 +211,11 @@ func (s *systemUserService) GetByEmail(email string) *lgo.OperationResult {
 //#endregion GetByEmail
 
 // #region GetAll
-func (s *systemUserService) GetAll(c *models.Context) *lgo.OperationResult {
-	return s.repo.GetAll()
+func (s *systemUserService) GetAll(query *mvc.QueryModel, c *models.Context) *lgo.OperationResult {
+	if result := query.Validate(); !result.IsSuccess() {
+		return lgo.NewLogicError("Geçersiz sorgu parametreleri: "+result.ErrorMessage, nil)
+	}
+	return s.repo.GetAll(query)
 }
 
 //#endregion GetAll

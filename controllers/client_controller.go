@@ -90,18 +90,15 @@ func (ctrl *ClientController) GetById(c *gin.Context) {
 
 // #region Get All Clients
 func (ctrl *ClientController) GetAll(c *gin.Context) {
-	// İstekten QueryModel'i oluştur
 	var query mvc.QueryModel
-	if err := c.ShouldBindJSON(&query); err != nil {
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, lgo.NewLogicError("Veri doğrulama hatası: "+err.Error(), nil))
 		return
 	}
 
-	// Servis çağrısı
 	context := models.NewContext(c)
 	result := ctrl.service.GetAll(&query, context)
 
-	// Sonuç döndür
 	c.JSON(http.StatusOK, result)
 }
 

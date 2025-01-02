@@ -104,11 +104,11 @@ func (r *clientProjectRepository) GetAll(query *mvc.QueryModel) *lgo.OperationRe
 	var clientProjects []*datamodels.ClientProject
 
 	defaultSorting := &mvc.DataSortingOptionItem{
-		ColumnName: "Name",
+		ColumnName: "\"Name\"",
 		Sorting:    0, // 0: ASC, 1: DESC
 	}
 
-	searchableColumns := []string{"Name"}
+	searchableColumns := []string{"\"Name\""}
 
 	// QueryModel'i uygula
 	db, result := ApplyQueryModel(r.db, query, searchableColumns, defaultSorting)

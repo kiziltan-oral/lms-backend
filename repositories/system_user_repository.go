@@ -122,11 +122,11 @@ func (r *systemUserRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResul
 	var systemUsers []*datamodels.SystemUser
 
 	defaultSorting := &mvc.DataSortingOptionItem{
-		ColumnName: "Name",
+		ColumnName: "\"Name\"",
 		Sorting:    0,
 	}
 
-	searchableColums := []string{"Name", "Surname", "Email"}
+	searchableColums := []string{"\"Name\"", "\"Surname\"", "\"Email\""}
 
 	db, result := ApplyQueryModel(r.db, query, searchableColums, defaultSorting)
 	if !result.IsSuccess() {

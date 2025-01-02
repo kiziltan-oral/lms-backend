@@ -6,12 +6,12 @@ import (
 
 // QueryModel: Pagination, Sorting, Searching ve Filtering için tek bir model
 type QueryModel struct {
-	PageNumber     int                      `json:"pn"`   // Sayfa numarası
-	RecordsPerPage int                      `json:"rpp"`  // Sayfa başına kayıt
-	SortingOptions []*DataSortingOptionItem `json:"so"`   // Sıralama bilgileri
-	Filter         string                   `json:"flt"`  // Tekil string filtre (örn. "Status=Active")
-	SearchTerm     string                   `json:"src"`  // Genel arama terimi
-	SearchFields   []string                 `json:"srcf"` // Arama yapılacak alanlar
+	PageNumber     int                      `json:"pn" form:"pn"`     // Sayfa numarası
+	RecordsPerPage int                      `json:"rpp" form:"rpp"`   // Sayfa başına kayıt
+	SortingOptions []*DataSortingOptionItem `json:"so" form:"so"`     // Sıralama bilgileri
+	Filter         string                   `json:"flt" form:"flt"`   // Tekil string filtre (örn. "Status=Active")
+	SearchTerm     string                   `json:"src" form:"src"`   // Genel arama terimi
+	SearchFields   []string                 `json:"srcf" form:"srcf"` // Arama yapılacak alanlar
 }
 
 // GetSkip: Atlanacak kayıt sayısını hesaplar
@@ -32,8 +32,8 @@ func (q *QueryModel) Validate() *lgo.OperationResult {
 
 // DataSortingOptionItem: Sıralama için sütun bilgileri
 type DataSortingOptionItem struct {
-	ColumnName string `json:"cn"` // Sütun adı
-	Sorting    int8   `json:"s"`  // 0: ASC, 1: DESC
+	ColumnName string `json:"cn" form:"cn"` // Sütun adı
+	Sorting    int8   `json:"s" form:"s"`   // 0: ASC, 1: DESC
 }
 
 // ToGormOrderString: GORM sıralama stringi oluşturur

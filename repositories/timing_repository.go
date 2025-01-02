@@ -109,11 +109,11 @@ func (r *timingRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
 	var timings []mvc.TimingViewModel
 
 	defaultSorting := &mvc.DataSortingOptionItem{
-		ColumnName: "Title",
+		ColumnName: "\"Title\"",
 		Sorting:    0,
 	}
 
-	searchableColumns := []string{"Title", "Description"}
+	searchableColumns := []string{"\"Title\"", "\"Description\""}
 
 	db, result := ApplyQueryModel(r.db, query, searchableColumns, defaultSorting)
 	if !result.IsSuccess() {

@@ -106,12 +106,12 @@ func (r *clientRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
 
 	// Varsayılan sıralama
 	defaultSorting := &mvc.DataSortingOptionItem{
-		ColumnName: "Title",
+		ColumnName: "\"Title\"",
 		Sorting:    0, // 0: ASC, 1: DESC
 	}
 
 	// Arama yapılacak sütunlar
-	searchableColumns := []string{"ShortTitle", "Title"}
+	searchableColumns := []string{"\"ShortTitle\"", "\"Title\""}
 
 	// QueryModel'i uygula
 	db, result := ApplyQueryModel(r.db, query, searchableColumns, defaultSorting)

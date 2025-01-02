@@ -84,7 +84,7 @@ func (ctrl *SystemUserController) GetById(c *gin.Context) {
 // #region Get All System Users
 func (ctrl *SystemUserController) GetAll(c *gin.Context) {
 	var query mvc.QueryModel
-	if err := c.ShouldBindJSON(&query); err != nil {
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, lgo.NewLogicError("Veri doğrulama hatası: "+err.Error(), nil))
 		return
 	}

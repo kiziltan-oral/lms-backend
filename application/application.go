@@ -40,7 +40,7 @@ func StartApplication() {
 
 func setupCORS() {
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{"http://localhost:3000"} // Update as per your frontend's origin
+	corsConfig.AllowOrigins = []string{"http://localhost:5173"} // Update as per your frontend's origin
 	corsConfig.AllowCredentials = true
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Token"}

@@ -86,7 +86,7 @@ func (ctrl *TimingController) GetById(c *gin.Context) {
 func (ctrl *TimingController) GetAll(c *gin.Context) {
 	// İstekten QueryModel'i oluştur
 	var query mvc.QueryModel
-	if err := c.ShouldBindJSON(&query); err != nil {
+	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, lgo.NewLogicError("Veri doğrulama hatası: "+err.Error(), nil))
 		return
 	}

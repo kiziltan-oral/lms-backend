@@ -269,10 +269,11 @@ func (s *systemUserService) Login(c *models.Context, request *mvc.SystemUserLogi
 	c.Token = systemUserToken
 
 	userData := map[string]string{
-		"e": systemUser.Email,
-		"n": systemUser.Name,
-		"s": systemUser.Surname,
-		"t": systemUserToken,
+		"suid": systemUser.Id.String(),
+		"e":    systemUser.Email,
+		"n":    systemUser.Name,
+		"s":    systemUser.Surname,
+		"t":    systemUserToken,
 	}
 
 	return lgo.NewSuccess(userData)

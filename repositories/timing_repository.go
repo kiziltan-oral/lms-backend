@@ -120,18 +120,18 @@ func (r *timingRepository) GetAll(query *mvc.QueryModel) *lgo.OperationResult {
 		return lgo.NewLogicError(("Sorgu modeli uygulanırken hata oluştur: " + result.ErrorMessage), nil)
 	}
 
-	db = db.Table("Timings AS t").Select(`
-		t.Id,
-		t.Title,
-		t.Description,
-		t.StartDateTime,
-		t.EndDateTime,
-		t.Status,
-		c.Title AS Client
-		cp.Name AS ClientProject
-	`).
-		Joins("JOIN ClientProjects AS cp ON t.ClientProjectId = cp.Id").
-		Joins("JOIN Clients AS c ON cp.ClientId = c.Id")
+	db = db.Table("\"Timings\" AS t").Select(`
+    t."Id",
+    t."Title",
+    t."Description",
+    t."StartDateTime",
+    t."EndDateTime",
+    t."Status",
+    c."Title" AS Client,
+    cp."Name" AS ClientProject
+`).
+		Joins("LEFT JOIN \"ClientProjects\" AS cp ON t.\"ClientProjectId\" = cp.\"Id\"").
+		Joins("LEFT JOIN \"Clients\" AS c ON cp.\"ClientId\" = c.\"Id\"")
 
 	// Veriyi ViewModel'e dönüştür
 	queryResult := db.Scan(&timings)

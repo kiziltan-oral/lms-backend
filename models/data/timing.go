@@ -37,12 +37,6 @@ func (model *Timing) Validate() error {
 	if len(model.Title) > 100 {
 		return errors.New("başlık 100 karakterden uzun olamaz")
 	}
-	if model.StartDateTime.IsZero() {
-		return errors.New("başlangıç zamanı alanı zorunludur")
-	}
-	if model.EndDateTime.IsZero() {
-		return errors.New("bitiş zamanı alanı zorunludur")
-	}
 	if model.EndDateTime.Before(model.StartDateTime) {
 		return errors.New("bitiş zamanı, başlangıç zamanından önce olamaz")
 	}
@@ -58,12 +52,6 @@ func (model *Timing) ValidateForUpdate() error {
 	}
 	if len(model.Title) > 100 {
 		return errors.New("başlık 100 karakterden uzun olamaz")
-	}
-	if model.StartDateTime.IsZero() {
-		return errors.New("başlangıç zamanı alanı zorunludur")
-	}
-	if model.EndDateTime.IsZero() {
-		return errors.New("bitiş zamanı alanı zorunludur")
 	}
 	if model.EndDateTime.Before(model.StartDateTime) {
 		return errors.New("bitiş zamanı, başlangıç zamanından önce olamaz")
